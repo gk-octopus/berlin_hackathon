@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { TimeRangeToggle } from "@/components/ui/TimeRangeToggle";
-import { InterconnectorMap } from "@/components/map/InterconnectorMap";
+import { useState, useEffect, useRef } from "react";
+import { StoryMap, StoryMapHandle } from "@/components/story/StoryMap";
+import { StoryPanel } from "@/components/story/StoryPanel";
+import { storySteps } from "@/components/story/StoryData";
 
 async function fetchNeso(limit: number = 96) {
   try {
@@ -32,10 +33,15 @@ async function fetchNeso(limit: number = 96) {
 }
 
 export default function StoryPage() {
-  const [timeRange, setTimeRange] = useState<"day" | "week">("day");
   const [records, setRecords] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [autoProgressTimer, setAutoProgressTimer] = useState<NodeJS.Timeout | null>(null);
+  const mapRef = useRef<StoryMapHandle | null>(null);
+
+  const currentStep = storySteps[currentStepIndex];
 
   useEffect(() => {
     const loadData = async () => {
@@ -43,7 +49,7 @@ export default function StoryPage() {
       setError(null);
       
       try {
-        const limit = timeRange === "day" ? 48 : 336; // 48 for 1 day, 336 for 7 days
+        const limit = 48; // Get last 24 hours of data
         
         // Add timeout to prevent infinite loading
         const timeoutPromise = new Promise((_, reject) => 
@@ -71,14 +77,65 @@ export default function StoryPage() {
     };
     
     loadData();
-  }, [timeRange]);
+  }, []);
+
+  // Auto-progress when playing
+  useEffect(() => {
+    if (isPlaying && currentStepIndex < storySteps.length - 1) {
+      const timer = setTimeout(() => {
+        setCurrentStepIndex(prev => prev + 1);
+      }, currentStep.duration + 2000); // Add 2 seconds for reading
+      
+      setAutoProgressTimer(timer);
+      return () => clearTimeout(timer);
+    } else if (isPlaying && currentStepIndex === storySteps.length - 1) {
+      // Stop playing at the end
+      setIsPlaying(false);
+    }
+  }, [isPlaying, currentStepIndex, currentStep.duration]);
+
+  const handlePrevious = () => {
+    if (currentStepIndex > 0) {
+      setCurrentStepIndex(prev => prev - 1);
+      setIsPlaying(false);
+    }
+  };
+
+  const handleNext = () => {
+    if (currentStepIndex < storySteps.length - 1) {
+      setCurrentStepIndex(prev => prev + 1);
+      setIsPlaying(false);
+    }
+  };
+
+  const handlePlayPause = () => {
+    if (autoProgressTimer) {
+      clearTimeout(autoProgressTimer);
+      setAutoProgressTimer(null);
+    }
+    setIsPlaying(!isPlaying);
+  };
+
+  const handleStepSelect = (stepId: number) => {
+    setCurrentStepIndex(stepId - 1);
+    setIsPlaying(false);
+    if (autoProgressTimer) {
+      clearTimeout(autoProgressTimer);
+      setAutoProgressTimer(null);
+    }
+  };
+
+  const handleStepComplete = () => {
+    // Called when map animation completes
+    // Could trigger additional effects here
+  };
 
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center max-w-md">
           <div className="text-4xl mb-4 text-primary">⚡</div>
-          <p className="text-foreground mb-4">Loading energy data...</p>
+          <p className="text-foreground mb-4">Loading energy story...</p>
           {error && (
             <div className="bg-card border border-border rounded-lg p-4 mb-4">
               <p className="text-sm text-muted-foreground mb-2">Having trouble loading data:</p>
@@ -86,7 +143,7 @@ export default function StoryPage() {
             </div>
           )}
           <div className="text-xs text-muted-foreground">
-            Check browser console for details
+            Preparing interactive story experience...
           </div>
         </div>
       </div>
@@ -94,40 +151,31 @@ export default function StoryPage() {
   }
 
   return (
-    <div className="h-[calc(100vh-4rem)]"> {/* Account for navbar height */}
-      {/* Time Range Toggle Above Map */}
-      <div className="absolute top-20 left-2.5 z-20 space-y-4"> {/* 10px spacing from navbar and left */}
-        <TimeRangeToggle 
-          selectedRange={timeRange} 
-          onRangeChange={setTimeRange} 
+    <div className="relative h-[calc(100vh-4rem)]"> {/* Account for navbar height */}
+      {/* Full-screen Map */}
+      <div className="absolute inset-0">
+        <StoryMap 
+          ref={mapRef}
+          data={records} 
+          currentStep={currentStep}
+          onStepComplete={handleStepComplete}
         />
-        
-        {/* Map Legend */}
-        <div className="bg-card/90 backdrop-blur-sm border border-border rounded-lg p-4 shadow-lg">
-          <h3 className="font-medium text-foreground mb-3">Interconnector Flows</h3>
-          <div className="space-y-2">
-            <div className="flex items-center gap-3">
-              <div className="w-6 h-1 bg-blue-400 rounded"></div>
-              <span className="text-sm text-foreground">Import to GB</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-6 h-1 bg-orange-400 rounded"></div>
-              <span className="text-sm text-foreground">Export from GB</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-6 h-1 bg-gray-400 rounded"></div>
-              <span className="text-sm text-foreground">No significant flow</span>
-            </div>
-            <div className="text-xs text-muted-foreground mt-2 pt-2 border-t border-border">
-              Line thickness = utilization
-            </div>
-          </div>
-        </div>
       </div>
-      
-      {/* Full-Screen Map */}
-      <div className="h-full w-full">
-        <InterconnectorMap data={records as any} />
+
+      {/* Overlay Story Panel */}
+      <div className="fixed left-4 md:left-6 top-[80px] bottom-[30px] z-10 pointer-events-none">
+        <div className="w-96 md:w-[420px] h-full pointer-events-auto">
+          <StoryPanel
+            currentStep={currentStep}
+            totalSteps={storySteps.length}
+            isPlaying={isPlaying}
+            onPrevious={handlePrevious}
+            onNext={handleNext}
+            onPlayPause={() => mapRef.current?.recenter()}
+            onStepSelect={handleStepSelect}
+            data={records}
+          />
+        </div>
       </div>
     </div>
   );

@@ -13,15 +13,6 @@ export function ViewToggle() {
   return (
     <div className="flex items-center gap-2 bg-card rounded-lg p-1">
       <Button
-        variant={isActive("/map") ? "default" : "ghost"}
-        size="sm"
-        onClick={() => router.push("/map")}
-        className="flex items-center gap-2"
-      >
-        <Map className="h-4 w-4" />
-        Map View
-      </Button>
-      <Button
         variant={isActive("/charts") ? "default" : "ghost"}
         size="sm"
         onClick={() => router.push("/charts")}

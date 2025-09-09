@@ -1,0 +1,141 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  --radius: 0.625rem;
+  /* Octopus Energy EXACT Color Scheme */
+  /* rgb(88, 30, 192) - Main Purple */
+  /* rgb(13, 1, 46) - Very Dark Purple (background) */
+  /* rgb(21, 1, 69) - Dark Purple (surfaces) */
+
+  /* Exact RGB variables */
+  --octopus-main: rgb(88, 30, 192);
+  --octopus-very-dark: rgb(13, 1, 46);
+  --octopus-dark: rgb(21, 1, 69);
+
+  /* Base surfaces (no white) */
+  --background: var(--octopus-very-dark);
+  --foreground: rgb(255, 255, 255);
+  --card: var(--octopus-dark);
+  --card-foreground: rgb(255, 255, 255);
+  --popover: var(--octopus-dark);
+  --popover-foreground: rgb(255, 255, 255);
+
+  /* Brand */
+  --primary: var(--octopus-main);
+  --primary-foreground: rgb(255, 255, 255);
+  --secondary: var(--octopus-dark);
+  --secondary-foreground: rgb(255, 255, 255);
+  --muted: var(--octopus-dark);
+  --muted-foreground: rgb(255, 255, 255);
+  --accent: var(--octopus-main);
+  --accent-foreground: rgb(255, 255, 255);
+  --destructive: oklch(0.577 0.245 27.325);
+
+  /* UI chrome */
+  --border: rgba(88, 30, 192, 0.35);
+  --input: var(--octopus-dark);
+  --ring: var(--octopus-main);
+
+  /* Charts */
+  --chart-1: var(--octopus-main);
+  --chart-2: var(--octopus-dark);
+  --chart-3: var(--octopus-very-dark);
+  --chart-4: rgba(88, 30, 192, 0.7);
+  --chart-5: rgba(88, 30, 192, 0.5);
+
+  /* Sidebar */
+  --sidebar: var(--octopus-dark);
+  --sidebar-foreground: rgb(255, 255, 255);
+  --sidebar-primary: var(--octopus-main);
+  --sidebar-primary-foreground: rgb(255, 255, 255);
+  --sidebar-accent: var(--octopus-dark);
+  --sidebar-accent-foreground: rgb(255, 255, 255);
+  --sidebar-border: rgba(88, 30, 192, 0.35);
+  --sidebar-ring: var(--octopus-main);
+}
+
+.dark {
+  /* Dark mode mirrors the same exact palette */
+  --background: var(--octopus-very-dark);
+  --foreground: rgb(255, 255, 255);
+  --card: var(--octopus-dark);
+  --card-foreground: rgb(255, 255, 255);
+  --popover: var(--octopus-dark);
+  --popover-foreground: rgb(255, 255, 255);
+  --primary: var(--octopus-main);
+  --primary-foreground: rgb(255, 255, 255);
+  --secondary: var(--octopus-dark);
+  --secondary-foreground: rgb(255, 255, 255);
+  --muted: var(--octopus-dark);
+  --muted-foreground: rgb(255, 255, 255);
+  --accent: var(--octopus-main);
+  --accent-foreground: rgb(255, 255, 255);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: rgba(88, 30, 192, 0.35);
+  --input: var(--octopus-dark);
+  --ring: var(--octopus-main);
+  --chart-1: var(--octopus-main);
+  --chart-2: var(--octopus-dark);
+  --chart-3: var(--octopus-very-dark);
+  --chart-4: rgba(88, 30, 192, 0.7);
+  --chart-5: rgba(88, 30, 192, 0.5);
+  --sidebar: var(--octopus-dark);
+  --sidebar-foreground: rgb(255, 255, 255);
+  --sidebar-primary: var(--octopus-main);
+  --sidebar-primary-foreground: rgb(255, 255, 255);
+  --sidebar-accent: var(--octopus-dark);
+  --sidebar-accent-foreground: rgb(255, 255, 255);
+  --sidebar-border: rgba(88, 30, 192, 0.35);
+  --sidebar-ring: var(--octopus-main);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}

@@ -12,9 +12,10 @@ export function Navbar() {
             <Image
               src="https://planopticon.energy/logo.svg"
               alt="Planopticon"
-              width={24}
+              width={48}
               height={24}
-              className="h-6 w-6"
+              className="h-6 w-12"
+              priority
             />
             <h1 className="text-xl font-semibold text-foreground ml-3">
               GB-EU Interconnector Dashboard

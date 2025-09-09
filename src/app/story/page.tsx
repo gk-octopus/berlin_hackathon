@@ -40,6 +40,8 @@ export default function StoryPage() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [autoProgressTimer, setAutoProgressTimer] = useState<NodeJS.Timeout | null>(null);
   const mapRef = useRef<StoryMapHandle | null>(null);
+  const mapWrapperRef = useRef<HTMLDivElement | null>(null);
+  const panelRef = useRef<HTMLDivElement | null>(null);
 
   const currentStep = storySteps[currentStepIndex];
 
@@ -117,7 +119,7 @@ export default function StoryPage() {
   };
 
   const handleStepSelect = (stepId: number) => {
-    setCurrentStepIndex(stepId - 1);
+    setCurrentStepIndex(stepId);
     setIsPlaying(false);
     if (autoProgressTimer) {
       clearTimeout(autoProgressTimer);
@@ -129,6 +131,27 @@ export default function StoryPage() {
     // Called when map animation completes
     // Could trigger additional effects here
   };
+
+  // Debug: log sizes and current step
+  useEffect(() => {
+    const logSizes = () => {
+      const panelEl = panelRef.current;
+      const mapEl = mapWrapperRef.current;
+      const panelSize = panelEl ? { width: panelEl.clientWidth, height: panelEl.clientHeight } : null;
+      const mapSize = mapEl ? { width: mapEl.clientWidth, height: mapEl.clientHeight } : null;
+      console.log('[Story Debug]', {
+        step: currentStepIndex + 1,
+        totalSteps: storySteps.length,
+        panelSize,
+        mapSize,
+        viewport: { width: window.innerWidth, height: window.innerHeight }
+      });
+    };
+
+    logSizes();
+    window.addEventListener('resize', logSizes);
+    return () => window.removeEventListener('resize', logSizes);
+  }, [currentStepIndex]);
 
   if (loading) {
     return (
@@ -151,9 +174,9 @@ export default function StoryPage() {
   }
 
   return (
-    <div className="relative h-[calc(100vh-4rem)]"> {/* Account for navbar height */}
+    <div className="relative h-[calc(100vh-4rem)] overflow-hidden"> {/* Account for navbar height and prevent horizontal overflow */}
       {/* Full-screen Map */}
-      <div className="absolute inset-0">
+      <div ref={mapWrapperRef} className="absolute inset-0">
         <StoryMap 
           ref={mapRef}
           data={records} 
@@ -164,7 +187,7 @@ export default function StoryPage() {
 
       {/* Overlay Story Panel */}
       <div className="fixed left-4 md:left-6 top-[80px] bottom-[30px] z-10 pointer-events-none">
-        <div className="w-96 md:w-[420px] h-full pointer-events-auto">
+        <div ref={panelRef} className="w-[500px] md:w-[550px] h-full pointer-events-auto">
           <StoryPanel
             currentStep={currentStep}
             totalSteps={storySteps.length}

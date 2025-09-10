@@ -1,3 +1,7 @@
+### Notice
+
+This project was built during a hackathon, so there may be a few rough edges. If you have questions or run into any issues, please reach out :)
+
 ## Project Overview
 
 An interactive energy story map built with Next.js, Mapbox GL JS, and Recharts. It narrates GB’s grid challenges (wind in the north, demand in the south, B6 bottleneck) and proposed solutions with live-ish visuals.

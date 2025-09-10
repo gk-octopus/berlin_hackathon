@@ -53,7 +53,7 @@ export const storySteps: StoryStep[] = [
   {
     id: 3,
     title: "Interconnectors Across the UK",
-    description: "We have interconnectors though, which is great to support demand across the UK. These cables connect us to Europe - from the south coast to France, Belgium and the Netherlands, to Norway via the North Sea, and to Ireland from Wales.",
+    description: "We have interconnectors though, which is great to support demand across the UK. These cables connect us to Europe - from the south coast to France, Belgium and the Netherlands, to Norway via the North Sea, to Denmark via the Viking Link and to Ireland from Wales.",
     mapCenter: [-1.5, 53.0],
     mapZoom: 4.2,
     mapBearing: 0,

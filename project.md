@@ -1,4 +1,4 @@
-Berlin Hackathon 2025 - Energy Data Visualization Project
+Berlin Hackathon 2025 - Energy Data Visualisation Project
 🎯 Project Overview
 Theme: "Bridging the gap between system operations and electricity markets"
 Host: 50Hertz
@@ -7,7 +7,7 @@ Location: Berlin
 📋 Hackathon Structure
 Day 1: September 9th
 09:00-09:15: Welcome
-09:15-10:00: Data visualization keynote by Koen van den Eeckhout (Baryon)
+09:15-10:00: Data visualisation keynote by Koen van den Eeckhout (Baryon)
 10:00-12:30: Teamwork Block 1
 12:30-13:30: Lunch break
 13:30-17:00: Teamwork Block 2
@@ -26,17 +26,17 @@ Impact	/5	Analysis addresses problem statement and research question
 Innovation	/5	Creative, original, out-of-the-box thinking
 Feasibility	/5	Easily applicable in day-to-day operations
 Pitch	/5	Well-structured and convincing presentation
-Visualization	+2 bonus	Extra points for exceptional visuals
+Visualisation	+2 bonus	Extra points for exceptional visuals
 Scoring Scale: Exceeds (5), Meets (3), Falls short (1)
 🎯 Our Project Focus
 Problem Statement
-Interconnector Flow Prediction and Grid Constraint Visualization
+Interconnector Flow Prediction and Grid Constraint Visualisation
 Interconnectors often flow in opposite directions and create tight margins in Great Britain. We need to:
 Visualize constraints in specific zones
 Predict GB constraints based on French electricity prices
 Create an alert system for grid operators
 Research Question
-"Do electricity prices in France (highly interconnected region) predict constraints in Great Britain, and can we create a predictive visualization tool?"
+"Do electricity prices in France (highly interconnected region) predict constraints in Great Britain, and can we create a predictive visualisation tool?"
 Approach
 Historical Analysis: Look back over historic periods to identify patterns
 Data Integration: Combine French energy prices (ENTSO-E) with GB constraints data (NESO)
@@ -64,14 +64,14 @@ Scottish Transfer: Power flow Scotland ↔ England/Wales (MW)
 Current Dashboard Features
 Octopus Energy Branding: Custom purple theme (rgb(88,30,192), rgb(13,1,46), rgb(21,1,69))
 Real-time Charts:
-Demand visualization (National vs Transmission System Demand)
+Demand visualisation (National vs Transmission System Demand)
 Embedded generation (Wind vs Solar)
 Data Integration: Live NESO API integration with 5-minute refresh
 Responsive Design: shadcn/ui components with Tailwind CSS
 Next Development Phases
-Phase 1: Enhanced Visualization
+Phase 1: Enhanced Visualisation
 [ ] Add interconnector flow charts
-[ ] Implement constraint visualization
+[ ] Implement constraint visualisation
 [ ] Create French price integration
 [ ] Add historical trend analysis
 Phase 2: Predictive Analytics
@@ -109,12 +109,12 @@ Business Impact
 [ ] Enhanced system stability
 Hackathon Success
 [ ] Compelling 5-minute pitch
-[ ] Innovative visualization approach
+[ ] Innovative visualisation approach
 [ ] Feasible implementation plan
 [ ] Strong technical demonstration
 🤝 Team Resources
 Mentorship Available
-Koen van den Eeckhout (Baryon): Data visualization expert
+Koen van den Eeckhout (Baryon): Data visualisation expert
 Helge Esch (50Hertz): Host and industry expert
 Julia Breuing: External data analytics advisor
 Marius Schrade (50Hertz): Co-host
@@ -127,7 +127,7 @@ Single Booths: Private calls and focus work
 Immediate Goals (Day 1)
 ✅ Set up Next.js dashboard with Octopus Energy branding
 ✅ Integrate NESO API for real-time demand data
-✅ Create initial demand and generation visualizations
+✅ Create initial demand and generation visualisations
 🔄 Add interconnector flow charts
 🔄 Research French price data integration
 Day 2 Goals

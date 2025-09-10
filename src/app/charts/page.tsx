@@ -125,16 +125,50 @@ export default function ChartsPage() {
   }
 
   // Calculate key metrics from the data
+  const latest = records[records.length - 1];
+  const current = latest
+    ? {
+        France: (latest.IFA_FLOW || 0) + (latest.IFA2_FLOW || 0) + (latest.ELECLINK_FLOW || 0),
+        Netherlands: latest.BRITNED_FLOW || 0,
+        Belgium: latest.NEMO_FLOW || 0,
+        Norway: latest.NSL_FLOW || 0,
+        Denmark: latest.VIKING_FLOW || 0,
+        Ireland: latest.GREENLINK_FLOW || 0,
+      }
+    : {
+        France: 0,
+        Netherlands: 0,
+        Belgium: 0,
+        Norway: 0,
+        Denmark: 0,
+        Ireland: 0,
+      };
+  const countryOrder: Array<keyof typeof current> = [
+    'France',
+    'Netherlands',
+    'Belgium',
+    'Norway',
+    'Denmark',
+    'Ireland',
+  ];
+  const flag: Record<string, string> = {
+    France: '🇫🇷',
+    Netherlands: '🇳🇱',
+    Belgium: '🇧🇪',
+    Norway: '🇳🇴',
+    Denmark: '🇩🇰',
+    Ireland: '🇮🇪',
+  };
 
   return (
     <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
       {/* Header */}
       <div className="text-center mb-8">
         <h1 className="text-4xl font-bold text-foreground mb-4">
-          GB-EU Interconnector Dashboard
+          The UK Energy Divide
         </h1>
         <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-          Real-time monitoring of electricity flows between Great Britain and European neighbors
+          Real-time monitoring of electricity flows between Great Britain and European neighbours
         </p>
       </div>
 
@@ -181,6 +215,41 @@ export default function ChartsPage() {
         </Card>
       </div>
 
+      {/* Current cross-border flows (simple tiles) */}
+      <div className="mb-8">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <div className="h-2 w-2 bg-primary rounded-full"></div>
+              Current cross-border flows
+            </CardTitle>
+            <CardDescription>Live net flow per country (GB-positive = importing)</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {countryOrder.map((c) => {
+                const v = Math.round(current[c]);
+                const importing = v > 0;
+                const magnitude = Math.abs(v);
+                return (
+                  <div key={c} className="rounded-lg border border-border bg-card/60 p-3 flex items-center justify-between">
+                    <div>
+                      <div className="text-sm font-semibold text-foreground">{flag[c]} {c}</div>
+                      <div className="text-xs text-muted-foreground">{importing ? 'Importing from' : 'Exporting to'} {c}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className={`text-sm font-semibold ${importing ? 'text-green-400' : 'text-amber-400'}`}>
+                        {importing ? '⬇️' : '⬆️'} {magnitude} MW
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Demand Difference Analysis */}
       <div className="mb-8">
         <Card>
@@ -199,117 +268,11 @@ export default function ChartsPage() {
         </Card>
       </div>
 
-      {/* Historical Interconnector Analysis */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <div className="h-2 w-2 bg-primary rounded-full"></div>
-              Country Trading Timeline
-            </CardTitle>
-            <CardDescription>
-              {timeRange === "day" ? "Last 24 hours" : "Last 7 days"} - How flows changed by country over time
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <InterconnectorTimelineChart data={records} />
-          </CardContent>
-        </Card>
+      {/* Per-country timelines - removed per request */}
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <div className="h-2 w-2 bg-primary rounded-full"></div>
-              Individual Cable Timeline
-            </CardTitle>
-            <CardDescription>
-              {timeRange === "day" ? "Last 24 hours" : "Last 7 days"} - Each physical interconnector cable
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <MajorCablesTimelineChart data={records} />
-          </CardContent>
-        </Card>
-      </div>
+      {/* Current Status Overview - removed per request */}
 
-      {/* Current Status Overview */}
-      <div className="mb-8">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <div className="h-2 w-2 bg-primary rounded-full"></div>
-              Current Interconnector Status
-            </CardTitle>
-            <CardDescription>Right now - detailed breakdown by country and cable</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <DetailedCountryFlows data={records} />
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Constraint Prediction Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <div className="h-2 w-2 bg-primary rounded-full"></div>
-                Constraint Predictions
-              </CardTitle>
-              <CardDescription>
-                AI-powered predictions of grid constraints based on interconnector flows and market signals
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <EvidenceBasedConstraints data={records} />
-            </CardContent>
-          </Card>
-        </div>
-        
-        <div>
-          <Card className="h-fit">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <div className="h-2 w-2 bg-primary rounded-full"></div>
-                Quick Actions
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Button className="w-full" variant="default">
-                🚨 Alert Operations
-              </Button>
-              <Button className="w-full" variant="outline">
-                📊 Export Data
-              </Button>
-              <Button className="w-full" variant="outline">
-                📈 Historical Analysis
-              </Button>
-              <Button className="w-full" variant="outline">
-                ⚙️ Configure Alerts
-              </Button>
-              
-              <div className="pt-4 border-t border-border">
-                <h4 className="text-sm font-medium mb-2">Data Sources</h4>
-                <div className="space-y-2 text-xs text-muted-foreground">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    NESO API - Live
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                    ENTSO-E - 15min delay
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                    Market Data - Live
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+      {/* Constraint Prediction Section - removed per request */}
     </main>
   );
 }

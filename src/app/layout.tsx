@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "GB-EU Interconnector Dashboard",
-  description: "Real-time monitoring of electricity flows between Great Britain and European neighbors",
+  description: "Real-time monitoring of electricity flows between Great Britain and European neighbours",
 };
 
 export default function RootLayout({

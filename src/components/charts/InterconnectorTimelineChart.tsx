@@ -45,7 +45,7 @@ type FlowRecord = {
   GREENLINK_FLOW: number;
 };
 
-export function InterconnectorTimelineChart({ data }: { data: FlowRecord[] }) {
+export function InterconnectorTimelineChart({ data, view = 'last24h' }: { data: FlowRecord[]; view?: 'last24h' | 'yesterday' }) {
   const formatted = data.map((d, index) => {
     const date = new Date(d.SETTLEMENT_DATE);
     const hours = Math.floor((d.SETTLEMENT_PERIOD - 1) / 2);
@@ -55,6 +55,7 @@ export function InterconnectorTimelineChart({ data }: { data: FlowRecord[] }) {
     return {
       time: `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`,
       fullTime: `${date.getMonth() + 1}/${date.getDate()} ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`,
+      dateObj: date,
       // Individual cables
       IFA: d.IFA_FLOW || 0,
       IFA2: d.IFA2_FLOW || 0,
@@ -78,6 +79,34 @@ export function InterconnectorTimelineChart({ data }: { data: FlowRecord[] }) {
       index: index
     };
   });
+
+  // Window selection
+  const now = new Date();
+  const latestValid = new Date(now);
+  latestValid.setMinutes(now.getMinutes() >= 30 ? 30 : 0, 0, 0);
+
+  let series = formatted.slice().sort((a, b) => a.index - b.index);
+  if (view === 'last24h') {
+    const filtered = series.filter((d) => d.dateObj <= latestValid);
+    series = filtered.slice(-48);
+  } else if (view === 'yesterday') {
+    // Robust UTC day-key selection to avoid timezone issues
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const dayKey = (d: Date) => `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`;
+    const currentKey = dayKey(latestValid);
+    const keys = Array.from(new Set(series.map(p => dayKey(p.dateObj)))).sort();
+    // Choose the last full day strictly before today
+    let targetKey = '';
+    for (let i = keys.length - 1; i >= 0; i--) {
+      if (keys[i] < currentKey) { targetKey = keys[i]; break; }
+    }
+    series = targetKey ? series.filter(p => dayKey(p.dateObj) === targetKey) : [];
+    // Fallback to last 48 if we somehow have no exact yesterday match
+    if (series.length === 0) {
+      const filtered = formatted.filter((d) => d.dateObj <= latestValid).sort((a, b) => a.index - b.index);
+      series = filtered.slice(-48);
+    }
+  }
 
   const CustomTooltip = ({ active, payload }: TooltipProps) => {
     if (active && payload && payload.length) {
@@ -117,14 +146,14 @@ export function InterconnectorTimelineChart({ data }: { data: FlowRecord[] }) {
   return (
     <div className="h-96 w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={formatted} margin={{ top: 12, right: 16, bottom: 4, left: 0 }}>
+        <LineChart data={series} margin={{ top: 12, right: 16, bottom: 4, left: 0 }}>
           <CartesianGrid stroke="rgba(255,255,255,0.12)" strokeDasharray="3 3" />
           <XAxis 
             dataKey="time" 
             stroke="white" 
             tickLine={false} 
             axisLine={{ stroke: "rgba(255,255,255,0.25)" }}
-            interval={Math.max(1, Math.floor(formatted.length / 10))}
+            interval={Math.max(1, Math.floor(series.length / 10))}
             angle={-45}
             textAnchor="end"
             height={60}
@@ -193,6 +222,9 @@ export function InterconnectorTimelineChart({ data }: { data: FlowRecord[] }) {
           />
         </LineChart>
       </ResponsiveContainer>
+      <div className="mt-2 text-xs text-muted-foreground">
+        {view === 'yesterday' ? 'Yesterday (00:00–23:30), full day.' : 'Last 24 hours (accurate to the last 30 minutes).'}
+      </div>
     </div>
   );
 }

@@ -74,7 +74,8 @@ export default function StoryPage() {
       setError(null);
       
       try {
-        const limit = 48; // Get last 24 hours of data
+        // Fetch enough history to render full "yesterday" (00:00–23:30) and recent data
+        const limit = 144; // 3 days (~72 hours) safety window
         
         // Add timeout to prevent infinite loading
         const timeoutPromise = new Promise((_, reject) => 

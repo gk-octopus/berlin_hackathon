@@ -24,6 +24,7 @@ interface TooltipProps {
       Nemo: number;
       NSL: number;
       Viking: number;
+      Greenlink: number;
     };
   }>;
 }
@@ -58,6 +59,7 @@ export function MajorCablesTimelineChart({ data }: { data: FlowRecord[] }) {
       Nemo: d.NEMO_FLOW || 0,
       NSL: d.NSL_FLOW || 0,
       Viking: d.VIKING_FLOW || 0,
+      Greenlink: d.GREENLINK_FLOW || 0,
       index: index
     };
   });
@@ -94,6 +96,10 @@ export function MajorCablesTimelineChart({ data }: { data: FlowRecord[] }) {
               <div>
                 <div className="font-medium text-red-400">Viking (1.4GW)</div>
                 <div>{Math.round(data.Viking)}MW</div>
+              </div>
+              <div>
+                <div className="font-medium text-green-400">Greenlink (0.5GW)</div>
+                <div>{Math.round(data.Greenlink)}MW</div>
               </div>
             </div>
             
@@ -188,6 +194,15 @@ export function MajorCablesTimelineChart({ data }: { data: FlowRecord[] }) {
             stroke="#ef4444" 
             strokeWidth={2}
             dot={false}
+          />
+          <Line 
+            type="monotone" 
+            dataKey="Greenlink" 
+            name="Greenlink (500MW)" 
+            stroke="#22c55e" 
+            strokeWidth={2}
+            dot={false}
+            strokeDasharray="5 5"
           />
         </LineChart>
       </ResponsiveContainer>

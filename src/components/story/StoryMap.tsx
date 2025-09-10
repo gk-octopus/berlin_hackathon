@@ -7,6 +7,7 @@
 import { useEffect, useRef, useState, forwardRef, useImperativeHandle, useCallback } from 'react';
 import Image from 'next/image';
 import mapboxgl from 'mapbox-gl';
+import proj4 from 'proj4';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { StoryStep } from './StoryData';
 
@@ -475,50 +476,64 @@ export const StoryMap = forwardRef<StoryMapHandle, StoryMapProps>(function Story
   const [mapLoaded, setMapLoaded] = useState(false);
   const [mapOffset, setMapOffset] = useState<[number, number]>([0, 0]);
   const animationFrameRef = useRef<number | null>(null);
-  const [showLoadingScreen, setShowLoadingScreen] = useState(true);
-  const [loadingProgress, setLoadingProgress] = useState(0);
+  const countryPopupRef = useRef<mapboxgl.Popup | null>(null);
+  const glowRefs = useRef<HTMLDivElement[]>([]);
+  const glowMoveHandlerRef = useRef<(() => void) | null>(null);
+
+  // B6 boundary glow locations: [lng, lat]
+  const B6_GLOW_LOCATIONS: [number, number][] = [
+    [-3.0529149515571543, 54.98973914198325],
+    [-2.2515670542872486, 55.65639507879315],
+  ];
+
+  const ensureGlowStyles = () => {
+    if (document.getElementById('b6-glow-style')) return;
+    const style = document.createElement('style');
+    style.id = 'b6-glow-style';
+    style.innerHTML = `
+      @keyframes b6Pulse { 0% { transform: translate(-50%, -50%) scale(0.7); opacity: 0.25; } 50% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; } 100% { transform: translate(-50%, -50%) scale(0.7); opacity: 0.25; } }
+      .b6-glow { position: absolute; pointer-events: none; width: 90px; height: 90px; border-radius: 9999px; background: radial-gradient(closest-side, rgba(239,68,68,0.55), rgba(239,68,68,0.25), rgba(239,68,68,0)); box-shadow: 0 0 35px rgba(239,68,68,0.55), 0 0 70px rgba(239,68,68,0.35); animation: b6Pulse 3s ease-in-out infinite; z-index: 1000; }
+    `;
+    document.head.appendChild(style);
+  };
+
+  const removeGlows = () => {
+    glowRefs.current.forEach(el => el.remove());
+    glowRefs.current = [];
+    if (glowMoveHandlerRef.current && map.current) {
+      map.current.off('move', glowMoveHandlerRef.current as any);
+      glowMoveHandlerRef.current = null;
+    }
+  };
+
+  const showB6Glows = () => {
+    if (!map.current) return;
+    ensureGlowStyles();
+    const container = map.current.getContainer();
+    const createOrUpdatePositions = () => {
+      B6_GLOW_LOCATIONS.forEach((lngLat, idx) => {
+        const pt = map.current!.project(lngLat as any);
+        let el = glowRefs.current[idx];
+        if (!el) {
+          el = document.createElement('div');
+          el.className = 'b6-glow';
+          container.appendChild(el);
+          glowRefs.current[idx] = el;
+        }
+        el.style.left = pt.x + 'px';
+        el.style.top = pt.y + 'px';
+      });
+    };
+    createOrUpdatePositions();
+    const handler = () => createOrUpdatePositions();
+    glowMoveHandlerRef.current = handler;
+    map.current.on('move', handler);
+  };
 
   // Get latest data point for current flows
   const latestData = data[data.length - 1] || {};
 
-  // Loading screen animation
-  useEffect(() => {
-    let progressInterval: NodeJS.Timeout;
-    
-    const animateProgress = () => {
-      const staggerPoint = Math.floor(Math.random() * 50) + 20; // Random between 20-70%
-      let progress = 0;
-      
-      progressInterval = setInterval(() => {
-        if (progress < staggerPoint) {
-          progress += Math.random() * 3 + 1; // Fast progress initially
-        } else if (progress < staggerPoint + 5) {
-          progress += Math.random() * 0.5; // Slow down at stagger point
-        } else if (progress < 100) {
-          progress += Math.random() * 4 + 2; // Resume fast progress
-        }
-        
-        if (progress >= 100) {
-          progress = 100;
-          clearInterval(progressInterval);
-          
-          // Wait 1 second then fade out (the CSS transition handles the smooth fade)
-          setTimeout(() => {
-            setShowLoadingScreen(false);
-          }, 3000); // Give time for the fade transition to complete
-        }
-        
-        setLoadingProgress(Math.min(progress, 100));
-      }, 50);
-    };
-    
-    // Start loading animation immediately
-    animateProgress();
-    
-    return () => {
-      clearInterval(progressInterval);
-    };
-  }, []);
+  // Removed loading overlay for instant load
 
   // Calculate map offset based on panel width
   useEffect(() => {
@@ -1061,8 +1076,122 @@ export const StoryMap = forwardRef<StoryMapHandle, StoryMapProps>(function Story
         console.warn('EGL2 transmission line will not be displayed. App will continue without EGL2 data.');
       }
 
-      // Load and add countries with pricing zone labels
+      // Add Eastern Green Link 1 transmission line (Torness → Hawthorn Pit)
       try {
+        const egl1Data = {
+          type: 'FeatureCollection',
+          features: [
+            {
+              type: 'Feature',
+              properties: { name: 'Eastern Green Link 1' },
+              geometry: {
+                type: 'LineString',
+                coordinates: [
+                  [-2.409310529, 55.96590993], // Torness (start)
+                  [-2.05, 56.05],               // head offshore
+                  [-1.80, 55.95],               // deeper into North Sea
+                  [-1.50, 55.75],               // further east
+                  [-1.30, 55.50],               // track south offshore
+                  [-1.20, 55.20],               // stay in the sea
+                  [-1.25, 54.95],               // begin approach
+                  [-1.404611031, 54.80302982]   // Hawthorn Pit (end)
+                ]
+              }
+            }
+          ]
+        } as any;
+
+        map.current!.addSource('egl1-line', { type: 'geojson', data: egl1Data });
+
+        map.current!.addLayer({
+          id: 'egl1-line',
+          type: 'line',
+          source: 'egl1-line',
+          layout: {
+            'line-join': 'round',
+            'line-cap': 'round',
+            'visibility': 'none'
+          },
+          paint: {
+            'line-color': '#10b981',
+            'line-width': [
+              'interpolate',
+              ['linear'],
+              ['zoom'],
+              3, 2,
+              6, 3,
+              10, 4
+            ],
+            'line-opacity': 0.8
+          },
+          minzoom: 3
+        });
+
+        map.current!.addLayer({
+          id: 'egl1-labels',
+          type: 'symbol',
+          source: 'egl1-line',
+          layout: {
+            'text-field': 'Eastern Green Link 1',
+            'visibility': 'none',
+            'text-font': ['Open Sans Regular', 'Arial Unicode MS Regular'],
+            'text-size': 11,
+            'text-anchor': 'center',
+            'symbol-placement': 'line',
+            'text-rotation-alignment': 'map',
+            'text-allow-overlap': false,
+            'text-ignore-placement': false
+          },
+          paint: {
+            'text-color': '#10b981',
+            'text-halo-color': '#ffffff',
+            'text-halo-width': 2
+          },
+          minzoom: 5
+        });
+      } catch (error) {
+        console.error('Error adding EGL1 line:', error);
+      }
+
+      // Define EPSG:27700 (British National Grid) so we can reproject to WGS84
+      try {
+        proj4.defs('EPSG:27700', '+proj=tmerc +lat_0=49 +lon_0=-2 +k=0.9996012717 +x_0=400000 +y_0=-100000 +ellps=airy +towgs84=446.448,-125.157,542.06,0.1502,0.247,0.8421,-20.4894 +units=m +no_defs');
+      } catch (e) {
+        // ignore if already defined
+      }
+
+      const convertCoord = (coord: number[]) => {
+        const [x, y] = coord as [number, number];
+        const [lng, lat] = proj4('EPSG:27700', 'WGS84', [x, y]);
+        return [lng, lat];
+      };
+
+      const reprojectGeometry = (geometry: any) => {
+        if (!geometry) return geometry;
+        const { type, coordinates } = geometry;
+        switch (type) {
+          case 'Point':
+            return { type, coordinates: convertCoord(coordinates) };
+          case 'MultiPoint':
+            return { type, coordinates: coordinates.map(convertCoord) };
+          case 'LineString':
+            return { type, coordinates: coordinates.map(convertCoord) };
+          case 'MultiLineString':
+            return { type, coordinates: coordinates.map((line: any) => line.map(convertCoord)) };
+          case 'Polygon':
+            return { type, coordinates: coordinates.map((ring: any) => ring.map(convertCoord)) };
+          case 'MultiPolygon':
+            return { type, coordinates: coordinates.map((poly: any) => poly.map((ring: any) => ring.map(convertCoord))) };
+          default:
+            return geometry;
+        }
+      };
+
+      // Feature flag: disable pricing zone (England/Scotland) rendering
+      const ENABLE_PRICING_ZONES = false;
+
+      // Load and add countries with pricing zone labels (disabled when flag is false)
+      if (ENABLE_PRICING_ZONES) try {
         const countriesResponse = await fetch(COUNTRIES_GEOJSON_URL);
         if (!countriesResponse.ok) {
           throw new Error(`Failed to fetch countries data: ${countriesResponse.status} ${countriesResponse.statusText}`);
@@ -1081,11 +1210,20 @@ export const StoryMap = forwardRef<StoryMapHandle, StoryMapProps>(function Story
           ...countriesData,
           features: (countriesData as GeoJSONData).features.map((feature: GeoJSONFeature) => {
             const countryName = feature.properties?.CTRY21NM || '';
+            const countryCode = (feature.properties as any)?.CTRY21CD || '';
             let pricingZoneLabel = '';
             
-            if (countryName.toLowerCase().includes('england') || countryName.toLowerCase().includes('wales')) {
+            if (
+              countryName.toLowerCase().includes('england') ||
+              countryName.toLowerCase().includes('wales') ||
+              (typeof countryCode === 'string' && countryCode.startsWith('E')) ||
+              (typeof countryCode === 'string' && countryCode.startsWith('W'))
+            ) {
               pricingZoneLabel = 'English Pricing Zone';
-            } else if (countryName.toLowerCase().includes('scotland')) {
+            } else if (
+              countryName.toLowerCase().includes('scotland') ||
+              (typeof countryCode === 'string' && countryCode.startsWith('S'))
+            ) {
               pricingZoneLabel = 'Scottish Pricing Zone';
             } else {
               pricingZoneLabel = countryName; // Fallback to original name
@@ -1093,6 +1231,7 @@ export const StoryMap = forwardRef<StoryMapHandle, StoryMapProps>(function Story
             
             return {
               ...feature,
+              geometry: reprojectGeometry(feature.geometry),
               properties: {
                 ...feature.properties,
                 pricingZone: pricingZoneLabel
@@ -1100,13 +1239,47 @@ export const StoryMap = forwardRef<StoryMapHandle, StoryMapProps>(function Story
             };
           })
         };
-        
+        // Build a centroid per pricing zone so we only render one label for England/Wales and one for Scotland
+        const zoneAccumulator: Record<string, { sumLng: number; sumLat: number; count: number }> = {};
+        const addCoord = (zone: string, coord: number[]) => {
+          if (!Array.isArray(coord) || coord.length < 2 || !isFinite(coord[0]) || !isFinite(coord[1])) return;
+          if (!zone) return;
+          if (!zoneAccumulator[zone]) zoneAccumulator[zone] = { sumLng: 0, sumLat: 0, count: 0 };
+          zoneAccumulator[zone].sumLng += coord[0];
+          zoneAccumulator[zone].sumLat += coord[1];
+          zoneAccumulator[zone].count += 1;
+        };
+        transformedCountriesData.features.forEach((f: any) => {
+          const zone = f.properties?.pricingZone || '';
+          const g = f.geometry;
+          if (!g) return;
+          if (g.type === 'Polygon') {
+            g.coordinates.forEach((ring: any) => ring.forEach((c: number[]) => addCoord(zone, c)));
+          } else if (g.type === 'MultiPolygon') {
+            g.coordinates.forEach((poly: any) => poly.forEach((ring: any) => ring.forEach((c: number[]) => addCoord(zone, c))));
+          }
+        });
+        const centroidFeatures = Object.entries(zoneAccumulator).map(([zone, acc]) => {
+          const lng = acc.sumLng / Math.max(1, acc.count);
+          const lat = acc.sumLat / Math.max(1, acc.count);
+          return {
+            type: 'Feature',
+            geometry: { type: 'Point', coordinates: [lng, lat] },
+            properties: { pricingZone: zone }
+          };
+        });
+
         map.current!.addSource('countries', {
           type: 'geojson',
           data: transformedCountriesData
         });
 
-        // Add countries fill layer (subtle background) - initially hidden
+        map.current!.addSource('countries-centroids', {
+          type: 'geojson',
+          data: { type: 'FeatureCollection', features: centroidFeatures } as any
+        });
+
+        // Add countries fill layer (solid colors) - initially hidden
         map.current!.addLayer({
           id: 'countries-fill',
           type: 'fill',
@@ -1117,11 +1290,21 @@ export const StoryMap = forwardRef<StoryMapHandle, StoryMapProps>(function Story
           paint: {
             'fill-color': [
               'case',
-              ['==', ['get', 'pricingZone'], 'English Pricing Zone'], '#e0f2fe', // Light blue for English zone
-              ['==', ['get', 'pricingZone'], 'Scottish Pricing Zone'], '#f3e5f5', // Light purple for Scottish zone
-              '#f5f5f5' // Light gray fallback
+              ['==', ['get', 'pricingZone'], 'English Pricing Zone'], '#2563eb', // Bold blue for English zone
+              ['==', ['get', 'pricingZone'], 'Scottish Pricing Zone'], '#a855f7', // Bold purple for Scottish zone
+              '#9ca3af' // Gray fallback
             ],
-            'fill-opacity': 0.1
+            'fill-opacity': [
+              'case',
+              ['==', ['get', 'pricingZone'], 'Scottish Pricing Zone'], 0.85,
+              0.8
+            ],
+            'fill-outline-color': [
+              'case',
+              ['==', ['get', 'pricingZone'], 'English Pricing Zone'], '#1e40af',
+              ['==', ['get', 'pricingZone'], 'Scottish Pricing Zone'], '#6d28d9',
+              '#6b7280'
+            ]
           },
           minzoom: 3
         });
@@ -1147,11 +1330,11 @@ export const StoryMap = forwardRef<StoryMapHandle, StoryMapProps>(function Story
           minzoom: 3
         });
 
-        // Add pricing zone labels (initially hidden)
+        // Add pricing zone labels (initially hidden) using zone centroids so labels sit in the middle
         map.current!.addLayer({
           id: 'pricing-zone-labels',
           type: 'symbol',
-          source: 'countries',
+          source: 'countries-centroids',
           layout: {
             'text-field': ['get', 'pricingZone'],
             'visibility': 'none',
@@ -1166,7 +1349,8 @@ export const StoryMap = forwardRef<StoryMapHandle, StoryMapProps>(function Story
             ],
             'text-anchor': 'center',
             'text-allow-overlap': false,
-            'text-ignore-placement': false
+            'text-ignore-placement': false,
+            'symbol-placement': 'point'
           },
           paint: {
             'text-color': [
@@ -1183,6 +1367,38 @@ export const StoryMap = forwardRef<StoryMapHandle, StoryMapProps>(function Story
         });
 
         console.log(`✅ Loaded countries with ${countriesData.features.length} features and pricing zone labels`);
+        
+        // Country hover tooltip (pricing zone + country name)
+        try {
+          if (map.current) {
+            const makePopupHtml = (feature: any) => {
+              const zone = feature?.properties?.pricingZone || '';
+              const name = feature?.properties?.CTRY21NM || '';
+              return `<div style="font-size:12px; line-height:1.2; color:#111; padding:6px 8px; background:white; border-radius:6px; border:1px solid rgba(0,0,0,0.15)">
+                        <div style="font-weight:600; margin-bottom:2px">${name}</div>
+                        <div style="color:#444">${zone}</div>
+                      </div>`;
+            };
+
+            map.current.on('mousemove', 'countries-fill', (e: any) => {
+              const feature = e.features && e.features[0];
+              if (!feature) return;
+              const html = makePopupHtml(feature);
+              if (!countryPopupRef.current) {
+                countryPopupRef.current = new mapboxgl.Popup({ closeButton: false, closeOnClick: false, offset: 8 });
+              }
+              countryPopupRef.current.setLngLat(e.lngLat).setHTML(html).addTo(map.current!);
+            });
+
+            map.current.on('mouseleave', 'countries-fill', () => {
+              if (countryPopupRef.current) {
+                countryPopupRef.current.remove();
+              }
+            });
+          }
+        } catch (popupErr) {
+          console.warn('Failed to initialize country tooltip popup', popupErr);
+        }
         
       } catch (error) {
         console.error('Error loading countries data:', error);
@@ -1627,6 +1843,78 @@ export const StoryMap = forwardRef<StoryMapHandle, StoryMapProps>(function Story
       // Load country images before creating cable routes
       const gasIconLoaded = await loadCountryImages();
       
+      // Add demand cities (population-weighted circles + labels)
+      try {
+        const toFeature = (name: string, lng: number, lat: number, population: number) => {
+          const radius = 6 + (population / 1_000_000) * 7; // scale 6–13+ px
+          const popLabel = population >= 1_000_000 ? `${(population / 1_000_000).toFixed(1)}m` : `${Math.round(population / 1000)}k`;
+          return {
+            type: 'Feature',
+            geometry: { type: 'Point', coordinates: [lng, lat] },
+            properties: { name, population, radius, popLabel }
+          };
+        };
+
+        const demandCityFeatures = [
+          toFeature('London', -0.1276, 51.5074, 7556900),
+          toFeature('Birmingham', -1.9026, 52.4797, 984333),
+          toFeature('Liverpool', -2.9916, 53.4084, 864122),
+          toFeature('Nottingham', -1.1490, 52.9548, 729977),
+          toFeature('Sheffield', -1.5491, 53.3811, 685368),
+          toFeature('Bristol', -2.5879, 51.4543, 617280),
+          toFeature('Glasgow', -4.2518, 55.8642, 591620),
+          toFeature('Leicester', -1.1398, 52.6369, 508916),
+          toFeature('Edinburgh', -3.1883, 55.9533, 464990),
+          toFeature('Leeds', -1.5491, 53.8008, 455123),
+          toFeature('Cardiff', -3.2017, 51.4816, 447287),
+          toFeature('Manchester', -2.2426, 53.4808, 395515),
+          toFeature('Stoke-on-Trent', -1.8904, 52.8007, 372775),
+          toFeature('Coventry', -1.5106, 52.4068, 359262)
+        ];
+
+        map.current!.addSource('demand-cities', {
+          type: 'geojson',
+          data: { type: 'FeatureCollection', features: demandCityFeatures } as any
+        });
+
+        map.current!.addLayer({
+          id: 'demand-cities',
+          type: 'circle',
+          source: 'demand-cities',
+          layout: { 'visibility': 'none' },
+          paint: {
+            'circle-color': '#1d4ed8',
+            'circle-opacity': 0.8,
+            'circle-stroke-width': 1,
+            'circle-stroke-color': '#ffffff',
+            'circle-radius': ['get', 'radius']
+          },
+          minzoom: 3
+        });
+
+        map.current!.addLayer({
+          id: 'demand-cities-labels',
+          type: 'symbol',
+          source: 'demand-cities',
+          layout: {
+            'visibility': 'none',
+            'text-field': ['concat', ['get', 'popLabel'], ' • ', ['get', 'name']],
+            'text-font': ['Open Sans Semibold', 'Arial Unicode MS Regular'],
+            'text-size': 11,
+            'text-offset': [0, 1.1],
+            'text-anchor': 'top'
+          },
+          paint: {
+            'text-color': '#ffffff',
+            'text-halo-color': '#0b1020',
+            'text-halo-width': 1.2
+          },
+          minzoom: 4
+        });
+      } catch (err) {
+        console.warn('Failed to create demand cities layer', err);
+      }
+
       // Create gas facilities layer after images are loaded
       if ((window as any).gasFacilityGeoJSON) {
         const gasFacilityGeoJSON = (window as any).gasFacilityGeoJSON;
@@ -2017,9 +2305,14 @@ export const StoryMap = forwardRef<StoryMapHandle, StoryMapProps>(function Story
         cancelAnimationFrame(animationId);
       }
       stopFlyingMoneyAnimation();
+      removeGlows();
       if (map.current) {
         map.current.remove();
         map.current = null;
+      }
+      if (countryPopupRef.current) {
+        countryPopupRef.current.remove();
+        countryPopupRef.current = null;
       }
     };
   }, []);
@@ -2070,8 +2363,11 @@ export const StoryMap = forwardRef<StoryMapHandle, StoryMapProps>(function Story
     // Control EGL2 transmission line visibility
     const showEGL2 = currentStep.layers?.includes('egl2-line') || currentStep.layers?.includes('eastern-green-link-2') || currentStep.layers?.includes('egl2');
     
-    // Control countries/pricing zones visibility
+    // Control countries/pricing zones visibility (feature disabled)
     const showCountries = currentStep.layers?.includes('countries') || currentStep.layers?.includes('pricing-zones') || currentStep.layers?.includes('zones');
+
+    // Control demand cities visibility (when demand step or explicitly requested)
+    const showDemandCities = currentStep.chartType === 'demand' || currentStep.layers?.includes('demand-cities');
     
     // Debug: Log countries visibility state
     if (showCountries) {
@@ -2127,6 +2423,12 @@ export const StoryMap = forwardRef<StoryMapHandle, StoryMapProps>(function Story
       }
       if (map.current.getLayer('egl2-labels')) {
         map.current.setLayoutProperty('egl2-labels', 'visibility', showEGL2 ? 'visible' : 'none');
+      }
+      if (map.current.getLayer('egl1-line')) {
+        map.current.setLayoutProperty('egl1-line', 'visibility', showEGL2 ? 'visible' : 'none');
+      }
+      if (map.current.getLayer('egl1-labels')) {
+        map.current.setLayoutProperty('egl1-labels', 'visibility', showEGL2 ? 'visible' : 'none');
       }
       
       // Hide interconnector cables during gas and wind payment steps
@@ -2193,6 +2495,14 @@ export const StoryMap = forwardRef<StoryMapHandle, StoryMapProps>(function Story
           console.warn(`❌ Layer ${layerId} not found on map`);
         }
       });
+
+      // Control demand cities visibility
+      const demandCityLayers = ['demand-cities', 'demand-cities-labels'];
+      demandCityLayers.forEach(layerId => {
+        if (map.current.getLayer(layerId)) {
+          map.current.setLayoutProperty(layerId, 'visibility', showDemandCities ? 'visible' : 'none');
+        }
+      });
       
       // Control NESO pin visibility
       if (map.current.getLayer('custom-pin-layer')) {
@@ -2247,6 +2557,14 @@ export const StoryMap = forwardRef<StoryMapHandle, StoryMapProps>(function Story
           map.current.setLayoutProperty(layerId, 'visibility', showProtectedAreas ? 'visible' : 'none');
         }
       });
+
+      // Show B6 crossing glows during step 5 (B6 Bottleneck) and step 8 (Wind Turbines Spin Up)
+      const shouldShowGlows = currentStep.id === 4 || currentStep.id === 7;
+      if (shouldShowGlows) {
+        showB6Glows();
+      } else {
+        removeGlows();
+      }
     } catch (error) {
       console.error('Error controlling layer visibility:', error);
     }
@@ -2262,63 +2580,17 @@ export const StoryMap = forwardRef<StoryMapHandle, StoryMapProps>(function Story
   return (
     <div className="relative h-full w-full">
       <div ref={mapContainer} className="h-full w-full" />
-      
-      {/* Loading Screen Overlay - Semi-transparent to show map loading behind */}
-      {showLoadingScreen && (
-        <div className={`absolute inset-0 flex items-center justify-center backdrop-blur-sm z-50 transition-all duration-1000 ease-out ${
-               loadingProgress >= 100 ? 'opacity-0' : 'opacity-100'
-             }`}
-             style={{ 
-               background: 'radial-gradient(ellipse at center, rgba(236, 87, 211, 0.15) 0%, rgba(147, 51, 234, 0.2) 40%, rgba(0, 0, 0, 0.3) 100%)' 
-             }}>
-          <div className="rounded-3xl p-8 max-w-md mx-4 text-center shadow-2xl border-4 shadow-purple-500/50" 
-               style={{ 
-                 backgroundColor: 'rgba(21, 1, 69, 0.85)',
-                 borderColor: 'rgb(236, 87, 211)',
-                 boxShadow: '0 0 30px rgba(236, 87, 211, 0.5), 0 0 60px rgba(147, 51, 234, 0.3)'
-               }}>
-            {/* Loading Image */}
-            <div className="mb-6">
-              <Image 
-                src="https://kuzgtbnlazsvcjuazowt.supabase.co/storage/v1/object/public/hackathon/Google%20Chrome%202025-09-09%2023.45.32.png"
-                alt="Loading"
-                width={400}
-                height={192}
-                className="w-full h-48 object-cover rounded-2xl"
-              />
-    </div>
-            
-            {/* Progress Bar */}
-            <div className="w-full bg-gray-800/50 rounded-full h-4 mb-4 border border-pink-400/30">
-              <div 
-                className="h-4 rounded-full transition-all duration-300 ease-out relative overflow-hidden"
-                style={{ 
-                  width: `${loadingProgress}%`,
-                  background: 'linear-gradient(90deg, #ec57d3, #a855f7, #ec57d3)',
-                  boxShadow: '0 0 15px rgba(236, 87, 211, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.3)'
-                }}
-              >
-                {/* Inner glow effect */}
-                <div className="absolute inset-0 rounded-full" 
-                     style={{
-                       background: 'linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.4) 50%, transparent 100%)',
-                       animation: 'shimmer 2s infinite'
-                     }}
-                />
-              </div>
-            </div>
-            
-            <style jsx>{`
-              @keyframes shimmer {
-                0% { transform: translateX(-100%); }
-                100% { transform: translateX(100%); }
-              }
-            `}</style>
-            
-            {/* Progress Text */}
-            <p className="text-white text-sm font-medium">
-              Loading Energy Data... {Math.round(loadingProgress)}%
-            </p>
+      {/* Country legend overlay */}
+      {false && (currentStep.layers?.includes('countries') || currentStep.layers?.includes('pricing-zones') || currentStep.layers?.includes('zones')) && mapLoaded && (
+        <div className="absolute top-3 right-3 z-40 rounded-md shadow-md border border-border bg-background/90 backdrop-blur px-3 py-2 text-xs">
+          <div className="font-semibold mb-2 text-foreground">Pricing Zones</div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="inline-block w-3 h-3 rounded-sm" style={{ background: '#e0f2fe', border: '1px solid #0277bd' }} />
+            <span className="text-muted-foreground">English Pricing Zone</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="inline-block w-3 h-3 rounded-sm" style={{ background: '#f3e5f5', border: '1px solid #7b1fa2' }} />
+            <span className="text-muted-foreground">Scottish Pricing Zone</span>
           </div>
         </div>
       )}

@@ -1,4 +1,4 @@
-import { StoryStep } from "./StoryData";
+ 
 export interface StoryStep {
   id: number;
   title: string;
@@ -8,7 +8,9 @@ export interface StoryStep {
   mapBearing?: number;
   mapPitch?: number;
   layers?: string[];
-  chartType?: 'demand' | 'interconnector' | 'renewable' | 'flows' | 'constraints';
+  chartType?: 'demand' | 'interconnector' | 'renewable' | 'flows' | 'constraints' | 'windComparison' | 'image' | 'negativePrice' | 'spending' | 'zonalSavings' | 'eglTimeline';
+  imageUrl?: string;
+  externalLink?: { label: string; url: string };
   duration: number; // Animation duration in ms
 }
 
@@ -26,14 +28,14 @@ export const storySteps: StoryStep[] = [
   },
   {
     id: 1,
-    title: "Wind Generation in Hilly Scotland",
-    description: "The UK is well known for having a lot of wind generation in the north, in hilly Scotland as well as extensive offshore wind farms in the North Sea.",
+    title: "Wind Generation in Rural Scotland",
+    description: "The UK is well known for having a lot of wind generation in the north, in rural Scotland as well as extensive offshore wind farms in the North Sea. Scotland is an ideal location for wind farms due to its consistent and strong North Sea winds and vast open landscape.",
     mapCenter: [-3.5, 56.0],
     mapZoom: 4.5,
     mapBearing: 0,
     mapPitch: 25,
     layers: ['wind-turbines', 'all-cables'],
-    chartType: 'renewable',
+    chartType: 'windComparison',
     duration: 3000
   },
   {
@@ -63,13 +65,13 @@ export const storySteps: StoryStep[] = [
   {
     id: 4,
     title: "The B6 Boundary Bottleneck",
-    description: "The north-south divide is caused by problems such as the B6 boundary, which is where in the UK, we only have 2 transmission lines connecting north to south.",
+    description: "The north-south divide is caused by problems such as the B6 boundary, which is where in the UK, we only have 2 transmission lines connecting north to south. We've shown how the UK energy system has high intermittent renewable output in the north. Demand is low in the north and high in the south however it’s not possible to transport clean power down south. This bottleneck is highly costly. Above the B6 boundary there is around 12 GW of onshore wind capacity but the network can carry a maximum of roughly 5–6 GW across this section.",
     mapCenter: [-2.2, 54.9],
     mapZoom: 7.5,
     mapBearing: -10,
     mapPitch: 40,
     layers: ['b6-boundary', 'all-cables'],
-    chartType: 'constraints',
+    chartType: 'renewable',
     duration: 4000
   },
   {
@@ -81,19 +83,21 @@ export const storySteps: StoryStep[] = [
     mapBearing: -10,
     mapPitch: 40,
     layers: ['b6-boundary', 'protected-areas', 'all-cables'],
-    chartType: 'constraints',
+    chartType: 'image',
+    imageUrl: 'https://kuzgtbnlazsvcjuazowt.supabase.co/storage/v1/object/public/hackathon/ANGER-4-WEB.jpg',
+    externalLink: { label: 'Further reading: BBC News article', url: 'https://www.bbc.co.uk/news' },
     duration: 3500
   },
   {
     id: 6,
     title: "Windy Days = Low Prices",
-    description: "On certain days where it's very windy, day-ahead prices are very low due to high wind forecasts and abundant cheap renewable energy.",
+    description: "On certain days where it's very windy, day-ahead prices are very low or even negative due to high wind forecasts and abundant cheap renewable energy.",
     mapCenter: [-2.5, 54.5],
     mapZoom: 5,
     mapBearing: 0,
     mapPitch: 25,
     layers: ['wind-turbines', 'all-cables'],
-    chartType: 'renewable',
+    chartType: 'negativePrice',
     duration: 3500
   },
   {
@@ -105,7 +109,7 @@ export const storySteps: StoryStep[] = [
     mapBearing: 0,
     mapPitch: 30,
     layers: ['wind-turbines', 'b6-boundary', 'all-cables'],
-    chartType: 'constraints',
+    chartType: 'renewable',
     duration: 4000
   },
   {
@@ -117,7 +121,8 @@ export const storySteps: StoryStep[] = [
     mapBearing: 0,
     mapPitch: 30,
     layers: ['wind-curtailment-icons', 'b6-boundary', 'all-cables'],
-    chartType: 'constraints',
+    chartType: 'image',
+    imageUrl: 'https://kuzgtbnlazsvcjuazowt.supabase.co/storage/v1/object/public/hackathon/giphy.gif',
     duration: 4000
   },
   {
@@ -129,7 +134,8 @@ export const storySteps: StoryStep[] = [
     mapBearing: 0,
     mapPitch: 40,
     layers: ['gas-facilities', 'all-cables'],
-    chartType: 'flows',
+    chartType: 'image',
+    imageUrl: 'https://kuzgtbnlazsvcjuazowt.supabase.co/storage/v1/object/public/hackathon/giphy.gif',
     duration: 4000
   },
   {
@@ -141,72 +147,74 @@ export const storySteps: StoryStep[] = [
     mapBearing: 0,
     mapPitch: 35,
     layers: ['all-cables'],
-    chartType: 'flows',
+    chartType: 'image',
+    imageUrl: 'https://kuzgtbnlazsvcjuazowt.supabase.co/storage/v1/object/public/hackathon/giphy.gif',
     duration: 4000
   },
   {
     id: 11,
-    title: "NESO Costs £856 Million - Customers Pay",
-    description: "This has so far cost this year £856 million on all of this expensive balancing - money that comes directly from customers' pockets to NESO for managing these constraints.",
+    title: "NESO Costs £690 Million - Customers Pay",
+    description: "This has so far cost this year £690 million on all of this expensive balancing - money that comes directly from customers' pockets to NESO for managing these constraints.",
     mapCenter: [-2.0, 54.0],
     mapZoom: 5,
     mapBearing: 0,
     mapPitch: 35,
     layers: ['all-cables', 'constantine-customers'],
-    chartType: 'constraints',
+    chartType: 'spending',
     duration: 3500
   },
   {
     id: 12,
     title: "Solution: Regional Pricing",
-    description: "To change this we must champion for regional pricing to help create interconnectors that work better with our neighbours and reduce last minute changes.",
+    description: "Regional pricing would send more accurate signals to the market, making the system run more efficiently. It would better align generation and demand across zones and reduce costly last‑minute balancing.",
     mapCenter: [-2.0, 54.0],
     mapZoom: 5,
     mapBearing: 0,
     mapPitch: 35,
     layers: ['pricing-zones', 'all-cables'],
-    chartType: 'demand',
+    chartType: 'zonalSavings',
     duration: 4000
   },
   {
     id: 13,
-    title: "Solution: Eastern Green Link 2",
-    description: "We must champion greater projects like the Eastern Green Link 2, but it's currently delayed by 10 years, leaving the problem unsolved for now.",
+    title: "Introduce additional transmission routes (and keep them on time)",
+    description: "Reinforcement projects are slipping and that keeps the B6 constraint in place. Eastern Green Link 1 (Torness–Hawthorn Pit) has moved from 2027 to 2030 (delayed), while Eastern Green Link 2 (Peterhead–Drax) is currently planned for 2029. Deliver these links on time—and, with two‑zone pricing, add more north–south routes to move surplus Scottish renewables to English demand more efficiently.",
     mapCenter: [1.0, 55.0],
     mapZoom: 5.5,
     mapBearing: 10,
     mapPitch: 30,
     layers: ['egl2', 'all-cables'],
-    chartType: 'interconnector',
+    chartType: 'eglTimeline',
     duration: 4000
   },
   {
     id: 14,
     title: "Solution: EU Market Coupling",
-    description: "We must champion greater coupling of UK to EU markets - better integration would allow for more efficient cross-border balancing, reducing last-minute actions and costs.",
+    description: "We must champion greater coupling of UK to EU markets. A potential UK–EU recoupling of electricity trading would improve cross‑border efficiency, maximize interconnector capacity, and reduce costly last‑minute balancing.",
     mapCenter: [2.0, 52.0],
     mapZoom: 4,
     mapBearing: 0,
     mapPitch: 45,
     layers: ['all-cables'],
-    chartType: 'flows',
+    chartType: 'image',
+    imageUrl: 'https://kuzgtbnlazsvcjuazowt.supabase.co/storage/v1/object/public/hackathon/hug.gif',
     duration: 4000
   },
   {
     id: 15,
     title: "Working Together for the Greater Good",
-    description: "This is critical to save money for the consumers, and work better balancing markets, as well as allowing policy changes to benefit the greater good!",
+    description: "Solutions at a glance to cut costs, move clean power, and speed up the transition.",
     mapCenter: [-1.0, 53.0],
     mapZoom: 4.5,
     mapBearing: 0,
     mapPitch: 50,
-    layers: ['all-cables'],
+    layers: ['egl2', 'pricing-zones', 'all-cables'],
     duration: 4000
   },
   {
     id: 16,
-    title: "See Real-Time Data",
-    description: "The UK market is good, but it can be great. Working together we can improve this. To see real-time data behind these market dynamics, please check out the Charts tab.",
+    title: "Build With Us — Open Source",
+    description: "This project is open‑source — explore the code!",
     mapCenter: [-1.0, 53.0],
     mapZoom: 4.5,
     mapBearing: 0,

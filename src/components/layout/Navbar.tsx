@@ -18,7 +18,8 @@ export function Navbar() {
               priority
             />
             <h1 className="text-xl font-semibold text-foreground ml-3">
-              GB-EU Interconnector Dashboard
+               The UK Energy Divide
+
             </h1>
           </div>
           

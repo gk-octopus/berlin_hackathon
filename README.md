@@ -1,3 +1,9 @@
+## Project Overview
+
+An interactive energy story map built with Next.js, Mapbox GL JS, and Recharts. It narrates GB’s grid challenges (wind in the north, demand in the south, B6 bottleneck) and proposed solutions with live-ish visuals.
+
+---
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
@@ -19,6 +25,48 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+
+## Mapbox API Setup
+
+The story map uses Mapbox GL JS. You need a Mapbox access token.
+
+1) Create a `.env.local` in the project root and add:
+
+```bash
+NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN=pk.your_mapbox_public_token_here
+```
+
+2) Restart the dev server after adding the env file.
+
+3) The token is read in `src/components/story/StoryMap.tsx` via `process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN`.
+
+If you deploy, also configure this env variable in your hosting provider.
+
+## Tech Stack
+
+- **Framework**: Next.js (App Router), React, TypeScript
+- **Map**: Mapbox GL JS (+ custom DOM overlays, animated markers, GeoJSON sources)
+- **Charts**: Recharts (Line/Area/Bar, reference lines, custom tooltips)
+- **Styling**: Tailwind CSS + shadcn/ui components
+- **Data**:
+  - NESO API (flows, spend) for live and historical data
+  - REPD-derived GeoJSON for wind/gas assets
+  - Supabase Storage for GeoJSON layers and images
+- **Utilities**: `proj4` for EPSG:27700 → WGS84 conversion
+
+## Scripts
+
+- `npm run dev` — start dev server
+- `npm run build` — type-check and build
+- `npm run start` — run production build
+
+## Notes
+
+- Map layers, steps, and charts are driven by:
+  - `src/components/story/StoryData.ts` — narrative steps
+  - `src/components/story/StoryMap.tsx` — Mapbox layers/logic
+  - `src/components/story/StoryPanel.tsx` — panel UI and chart routing
+- Some steps use placeholder values or GIFs; wire your own endpoints if needed.
 
 ## Learn More
 

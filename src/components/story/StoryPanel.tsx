@@ -227,12 +227,13 @@ export function StoryPanel({
         
         <CardContent className="flex-1 min-h-0 overflow-y-auto relative">
           {/* Chart Section */}
+          {/* Removed step 10 placeholder grid; using map pins instead */}
           {currentStep.chartType && (
             <div className="mb-6">
               <h3 className="text-lg font-semibold mb-4 text-foreground">
                 {currentStep.id === 6 ? 'Negative Price Overview' : currentStep.id === 4 ? 'Wind Capacity vs B6 Limit' : currentStep.id === 11 ? 'NESO Spend (YTD + Projection)' : currentStep.id === 12 ? 'Zonal vs National (£/MWh savings)' : currentStep.id === 13 ? 'EGL Timelines (planned vs delay)' : 'Visualisation'}
               </h3>
-              <div className={`${currentStep.chartType === 'windComparison' ? 'h-56' : (currentStep.chartType === 'demand' ? 'h-[26rem]' : 'h-64')} bg-muted/20 rounded-lg p-4`}>
+              <div className={`${currentStep.chartType === 'windComparison' ? 'h-56' : (currentStep.chartType === 'demand' ? 'h-[28rem]' : 'h-64')} bg-muted/20 rounded-lg p-4`}>
                 {renderChart()}
               </div>
             </div>

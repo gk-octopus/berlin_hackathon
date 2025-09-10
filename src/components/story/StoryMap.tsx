@@ -109,6 +109,17 @@ export type StoryMapHandle = {
   recenter: () => void;
 };
 
+// Step 10 placeholder £/MWh markers (snapshot values)
+const STEP10_PRICE_POINTS: Array<{ code: string; value: number | null; coords: [number, number] }> = [
+  { code: 'UK', value: -23, coords: [-2.0, 54.0] },
+  { code: 'DK', value: 9.06, coords: [9.4, 56.0] },
+  { code: 'NO1', value: 20.62, coords: [10.75, 59.9] },
+  { code: 'NO2', value: 20.76, coords: [6.2, 58.8] },
+  { code: 'FR', value: 63.36, coords: [2.2, 46.2] },
+  { code: 'IE', value: null, coords: [-8.0, 53.4] },
+  { code: 'NL', value: 9.06, coords: [5.3, 52.3] },
+];
+
 
 // Interconnector cable endpoints (exact coordinates)
 const CABLE_ROUTES = {
@@ -2028,6 +2039,69 @@ export const StoryMap = forwardRef<StoryMapHandle, StoryMapProps>(function Story
         console.warn('Constantine icon or data not available, skipping customer figures');
       }
 
+      // Add step 10 £/MWh placeholder markers (initially hidden)
+      try {
+        const priceFeatures = STEP10_PRICE_POINTS.map(p => {
+          const label = p.value === null ? '—' : `€${p.value.toFixed(2)}`;
+          const color = p.value === null ? '#9ca3af' : (p.value >= 0 ? '#10b981' : '#ef4444');
+          return {
+            type: 'Feature',
+            geometry: { type: 'Point', coordinates: p.coords },
+            properties: { code: p.code, value: p.value, label, color }
+          };
+        });
+
+        map.current!.addSource('step10-prices', {
+          type: 'geojson',
+          data: { type: 'FeatureCollection', features: priceFeatures } as any
+        });
+
+        map.current!.addLayer({
+          id: 'step10-prices-circles',
+          type: 'circle',
+          source: 'step10-prices',
+          layout: { 'visibility': 'none' },
+          paint: {
+            'circle-color': ['get', 'color'],
+            'circle-opacity': 0.8,
+            'circle-radius': [
+              'interpolate', ['linear'], ['zoom'],
+              3, 6, 6, 9, 8, 11
+            ],
+            'circle-stroke-width': 1.5,
+            'circle-stroke-color': '#0b1020'
+          },
+          minzoom: 3
+        });
+
+        map.current!.addLayer({
+          id: 'step10-prices-labels',
+          type: 'symbol',
+          source: 'step10-prices',
+          layout: {
+            'visibility': 'none',
+            'text-field': ['get', 'label'],
+            'text-font': ['Open Sans Semibold', 'Arial Unicode MS Regular'],
+            'text-size': [
+              'interpolate', ['linear'], ['zoom'],
+              3, 13, 6, 15, 8, 17
+            ],
+            'text-offset': [0, 1.1],
+            'text-anchor': 'top',
+            'text-allow-overlap': true,
+            'text-ignore-placement': true
+          },
+          paint: {
+            'text-color': ['get', 'color'],
+            'text-halo-color': '#0b1020',
+            'text-halo-width': 1.2
+          },
+          minzoom: 3
+        });
+      } catch (err) {
+        console.warn('Failed to create step 10 price markers', err);
+      }
+
       // Add NESO pin layer LAST for highest z-index (above money and Constantine figures)
       if ((window as any).nesoPinLayerConfig && map.current && map.current.hasImage('custom-pin-image')) {
         const layerConfig = (window as any).nesoPinLayerConfig;
@@ -2369,6 +2443,9 @@ export const StoryMap = forwardRef<StoryMapHandle, StoryMapProps>(function Story
     // Control demand cities visibility (when demand step or explicitly requested)
     const showDemandCities = currentStep.chartType === 'demand' || currentStep.layers?.includes('demand-cities');
     
+    // Control step 10 price markers visibility
+    const showStep10Prices = currentStep.id === 10;
+    
     // Debug: Log countries visibility state
     if (showCountries) {
       console.log(`🗺️ Step ${currentStep.id}: Showing countries/pricing zones`, {
@@ -2514,6 +2591,24 @@ export const StoryMap = forwardRef<StoryMapHandle, StoryMapProps>(function Story
         map.current.setLayoutProperty('constantine-customers', 'visibility', showConstantineCustomers ? 'visible' : 'none');
       }
       
+      // Control step 10 £/MWh placeholder markers
+      if (map.current.getLayer('step10-prices-circles')) {
+        map.current.setLayoutProperty('step10-prices-circles', 'visibility', showStep10Prices ? 'visible' : 'none');
+        if (showStep10Prices) {
+          try {
+            map.current.moveLayer('step10-prices-circles');
+          } catch {}
+        }
+      }
+      if (map.current.getLayer('step10-prices-labels')) {
+        map.current.setLayoutProperty('step10-prices-labels', 'visibility', showStep10Prices ? 'visible' : 'none');
+        if (showStep10Prices) {
+          try {
+            map.current.moveLayer('step10-prices-labels');
+          } catch {}
+        }
+      }
+      
       // Handle flying money animations for NESO steps
       // Only run NESO-to-targets animation if Constantine customers are NOT visible
       console.log('💰 MONEY DEBUG:', {
@@ -2592,6 +2687,11 @@ export const StoryMap = forwardRef<StoryMapHandle, StoryMapProps>(function Story
             <span className="inline-block w-3 h-3 rounded-sm" style={{ background: '#f3e5f5', border: '1px solid #7b1fa2' }} />
             <span className="text-muted-foreground">Scottish Pricing Zone</span>
           </div>
+        </div>
+      )}
+      {currentStep.id === 10 && (
+        <div className="absolute top-3 left-3 z-40 rounded-md shadow-md border border-border bg-background/90 backdrop-blur px-3 py-2 text-xs text-muted-foreground">
+          €/MWh (example snapshot • 2024-12-31 22:30)
         </div>
       )}
     </div>

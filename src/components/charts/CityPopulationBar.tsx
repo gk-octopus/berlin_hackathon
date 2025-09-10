@@ -14,12 +14,11 @@ const cities: City[] = [
   { name: "Glasgow", population: 591620 },
   { name: "Leicester", population: 508916 },
   { name: "Edinburgh", population: 464990 },
-  { name: "Leeds", population: 455123 },
-  { name: "Cardiff", population: 447287 },
+  // Removed by request: Leeds, Cardiff
   // Removed by request: Manchester, Stoke-on-Trent, Cardiff
   // { name: "Manchester", population: 395515 },
   // { name: "Stoke-on-Trent", population: 372775 },
-  { name: "Coventry", population: 359262 },
+  // Removed by request: Coventry
 ];
 
 const data = cities

@@ -58,6 +58,12 @@ If you deploy, also configure this env variable in your hosting provider.
   - Supabase Storage for GeoJSON layers and images
 - **Utilities**: `proj4` for EPSG:27700 → WGS84 conversion
 
+## Hosting & Storage
+
+- Frontend can plug directly into Vercel for hosting (zero-config for Next.js).
+- Any blob/object storage works for assets and GeoJSON.
+- This project uses Supabase Storage (backed by AWS S3) with a public bucket for convenience.
+
 ## Scripts
 
 - `npm run dev` — start dev server

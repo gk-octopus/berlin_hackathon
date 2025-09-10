@@ -5,6 +5,29 @@ import { StoryMap, StoryMapHandle } from "@/components/story/StoryMap";
 import { StoryPanel } from "@/components/story/StoryPanel";
 import { storySteps } from "@/components/story/StoryData";
 
+interface NesoRecord {
+  SETTLEMENT_DATE: string;
+  SETTLEMENT_PERIOD: number;
+  ND: number;
+  TSD: number;
+  IFA_FLOW: number;
+  IFA2_FLOW: number;
+  BRITNED_FLOW: number;
+  NEMO_FLOW: number;
+  NSL_FLOW: number;
+  ELECLINK_FLOW: number;
+  VIKING_FLOW: number;
+  GREENLINK_FLOW: number;
+  EMBEDDED_WIND_GENERATION: number;
+  EMBEDDED_SOLAR_GENERATION: number;
+  SCOTTISH_TRANSFER: number;
+  [key: string]: any; // For any other properties we might have missed
+}
+
+interface NesoApiResponse {
+  records: NesoRecord[];
+}
+
 async function fetchNeso(limit: number = 96) {
   try {
     console.log('Fetching NESO data with limit:', limit);
@@ -20,20 +43,20 @@ async function fetchNeso(limit: number = 96) {
     
     if (!res.ok) {
       console.error('NESO API error:', res.status, res.statusText);
-      return { records: [] } as any;
+      return { records: [] };
     }
     
     const json = await res.json();
     console.log('NESO data received, records count:', json.result?.records?.length || 0);
-    return json.result as { records: any[] };
+    return json.result as NesoApiResponse;
   } catch (error) {
     console.error('Error fetching NESO data:', error);
-    return { records: [] } as any;
+    return { records: [] };
   }
 }
 
 export default function StoryPage() {
-  const [records, setRecords] = useState<any[]>([]);
+  const [records, setRecords] = useState<NesoRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
@@ -61,7 +84,7 @@ export default function StoryPage() {
         const { records: data } = await Promise.race([
           fetchNeso(limit),
           timeoutPromise
-        ]) as { records: any[] };
+        ]) as NesoApiResponse;
         
         setRecords(data || []);
         
@@ -110,13 +133,6 @@ export default function StoryPage() {
     }
   };
 
-  const handlePlayPause = () => {
-    if (autoProgressTimer) {
-      clearTimeout(autoProgressTimer);
-      setAutoProgressTimer(null);
-    }
-    setIsPlaying(!isPlaying);
-  };
 
   const handleStepSelect = (stepId: number) => {
     setCurrentStepIndex(stepId);
@@ -187,7 +203,7 @@ export default function StoryPage() {
 
       {/* Overlay Story Panel */}
       <div className="fixed left-4 md:left-6 top-[80px] bottom-[30px] z-10 pointer-events-none">
-        <div ref={panelRef} className="w-[500px] md:w-[550px] h-full pointer-events-auto">
+        <div ref={panelRef} className="w-[500px] md:w-[550px] h-full pointer-events-auto">  
           <StoryPanel
             currentStep={currentStep}
             totalSteps={storySteps.length}

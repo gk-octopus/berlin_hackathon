@@ -12,6 +12,18 @@ import {
   Legend,
 } from "recharts";
 
+interface TooltipPayloadEntry {
+  dataKey: string;
+  value: number;
+  color: string;
+}
+
+interface TooltipProps {
+  active?: boolean;
+  payload?: TooltipPayloadEntry[];
+  label?: string;
+}
+
 type BalanceRecord = {
   SETTLEMENT_DATE: string;
   SETTLEMENT_PERIOD: number;
@@ -42,12 +54,12 @@ export function GridBalanceChart({ data }: { data: BalanceRecord[] }) {
     };
   });
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
           <p className="text-card-foreground font-medium mb-2">{`Time: ${label}`}</p>
-          {payload.map((entry: any, index: number) => {
+          {payload.map((entry: TooltipPayloadEntry, index: number) => {
             let unit = 'MW';
             let description = '';
             

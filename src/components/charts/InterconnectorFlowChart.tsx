@@ -12,6 +12,18 @@ import {
   ReferenceLine,
 } from "recharts";
 
+interface TooltipPayloadEntry {
+  dataKey: string;
+  value: number;
+  color: string;
+}
+
+interface TooltipProps {
+  active?: boolean;
+  payload?: TooltipPayloadEntry[];
+  label?: string;
+}
+
 type FlowRecord = {
   SETTLEMENT_DATE: string;
   SETTLEMENT_PERIOD: number;
@@ -38,12 +50,12 @@ export function InterconnectorFlowChart({ data }: { data: FlowRecord[] }) {
     Ireland: d.GREENLINK_FLOW,
   }));
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
           <p className="text-card-foreground font-medium mb-2">{`Time: ${label}`}</p>
-          {payload.map((entry: any, index: number) => (
+          {payload.map((entry: TooltipPayloadEntry, index: number) => (
             <p key={index} className="text-sm" style={{ color: entry.color }}>
               {`${entry.dataKey}: ${entry.value > 0 ? '+' : ''}${entry.value} MW`}
               <span className="text-muted-foreground ml-1">

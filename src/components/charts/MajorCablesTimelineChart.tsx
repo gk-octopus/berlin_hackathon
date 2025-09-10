@@ -12,6 +12,22 @@ import {
   ReferenceLine,
 } from "recharts";
 
+interface TooltipProps {
+  active?: boolean;
+  payload?: Array<{
+    payload: {
+      time: string;
+      fullTime: string;
+      IFA: number;
+      IFA2: number;
+      BritNed: number;
+      Nemo: number;
+      NSL: number;
+      Viking: number;
+    };
+  }>;
+}
+
 type FlowRecord = {
   SETTLEMENT_DATE: string;
   SETTLEMENT_PERIOD: number;
@@ -46,7 +62,7 @@ export function MajorCablesTimelineChart({ data }: { data: FlowRecord[] }) {
     };
   });
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip = ({ active, payload }: TooltipProps) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (

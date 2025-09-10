@@ -19,15 +19,34 @@ interface ConstraintData {
   trend: "increasing" | "stable" | "decreasing";
 }
 
+interface NesoRecord {
+  SETTLEMENT_DATE: string;
+  SETTLEMENT_PERIOD: number;
+  ND: number;
+  TSD: number;
+  IFA_FLOW: number;
+  IFA2_FLOW: number;
+  BRITNED_FLOW: number;
+  NEMO_FLOW: number;
+  NSL_FLOW: number;
+  ELECLINK_FLOW: number;
+  VIKING_FLOW: number;
+  GREENLINK_FLOW: number;
+  EMBEDDED_WIND_GENERATION: number;
+  EMBEDDED_SOLAR_GENERATION: number;
+  SCOTTISH_TRANSFER: number;
+  [key: string]: any; // For any other properties we might have missed
+}
+
 interface EvidenceBasedConstraintsProps {
-  data: any[];
+  data: NesoRecord[];
 }
 
 export function EvidenceBasedConstraints({ data }: EvidenceBasedConstraintsProps) {
   const [selectedRegion, setSelectedRegion] = useState<"france" | "scotland" | "netherlands" | null>(null);
   
   // Calculate real constraint probabilities based on actual data
-  const generateEvidenceBasedConstraints = (records: any[]): ConstraintData[] => {
+  const generateEvidenceBasedConstraints = (records: NesoRecord[]): ConstraintData[] => {
     if (!records || records.length === 0) return [];
     
     const latest = records[0];

@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Map, BarChart3, BookOpen } from "lucide-react";
+import { BarChart3, BookOpen } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 
 export function ViewToggle() {

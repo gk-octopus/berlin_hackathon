@@ -5,6 +5,25 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, ChevronRight, Crosshair } from "lucide-react";
 import { StoryStep } from "./StoryData";
+
+interface NesoRecord {
+  SETTLEMENT_DATE: string;
+  SETTLEMENT_PERIOD: number;
+  ND: number;
+  TSD: number;
+  IFA_FLOW: number;
+  IFA2_FLOW: number;
+  BRITNED_FLOW: number;
+  NEMO_FLOW: number;
+  NSL_FLOW: number;
+  ELECLINK_FLOW: number;
+  VIKING_FLOW: number;
+  GREENLINK_FLOW: number;
+  EMBEDDED_WIND_GENERATION: number;
+  EMBEDDED_SOLAR_GENERATION: number;
+  SCOTTISH_TRANSFER: number;
+  [key: string]: any; // For any other properties we might have missed
+}
 import { DemandChart } from "@/components/charts/DemandChart";
 import { EmbeddedGenChart } from "@/components/charts/EmbeddedGenChart";
 import { InterconnectorTimelineChart } from "@/components/charts/InterconnectorTimelineChart";
@@ -19,13 +38,12 @@ interface StoryPanelProps {
   onNext: () => void;
   onPlayPause: () => void;
   onStepSelect: (stepId: number) => void;
-  data: any[];
+  data: NesoRecord[];
 }
 
 export function StoryPanel({ 
   currentStep, 
   totalSteps, 
-  isPlaying, 
   onPrevious, 
   onNext, 
   onPlayPause, 

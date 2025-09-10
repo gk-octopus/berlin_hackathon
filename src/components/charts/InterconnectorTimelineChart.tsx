@@ -12,6 +12,26 @@ import {
   ReferenceLine,
 } from "recharts";
 
+interface TooltipProps {
+  active?: boolean;
+  payload?: Array<{
+    payload: {
+      time: string;
+      fullTime: string;
+      France: number;
+      Netherlands: number;
+      Belgium: number;
+      Norway: number;
+      Denmark: number;
+      Ireland: number;
+      NetFlow: number;
+      IFA: number;
+      IFA2: number;
+      ElecLink: number;
+    };
+  }>;
+}
+
 type FlowRecord = {
   SETTLEMENT_DATE: string;
   SETTLEMENT_PERIOD: number;
@@ -59,7 +79,7 @@ export function InterconnectorTimelineChart({ data }: { data: FlowRecord[] }) {
     };
   });
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip = ({ active, payload }: TooltipProps) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (

@@ -13,6 +13,21 @@ import {
   ReferenceLine,
 } from "recharts";
 
+interface TooltipProps {
+  active?: boolean;
+  payload?: Array<{
+    payload: {
+      time: string;
+      flow: number;
+      utilization: number;
+      constraintRisk: number;
+      capacity: number;
+      demand: number;
+    };
+  }>;
+  label?: string;
+}
+
 type FlowRecord = {
   SETTLEMENT_DATE: string;
   SETTLEMENT_PERIOD: number;
@@ -30,7 +45,7 @@ interface ConstraintAnalysisProps {
 }
 
 export function ConstraintAnalysisChart({ data, region }: ConstraintAnalysisProps) {
-  const formatted = data.slice(0, 48).map((d, index) => {
+  const formatted = data.slice(0, 48).map((d) => {
     const date = new Date(d.SETTLEMENT_DATE);
     const hours = Math.floor((d.SETTLEMENT_PERIOD - 1) / 2);
     const minutes = ((d.SETTLEMENT_PERIOD - 1) % 2) * 30;
@@ -96,7 +111,7 @@ export function ConstraintAnalysisChart({ data, region }: ConstraintAnalysisProp
 
   const regionInfo = getRegionInfo();
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (

@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DemandChart } from "@/components/charts/DemandChart";
 import { EmbeddedGenChart } from "@/components/charts/EmbeddedGenChart";
@@ -12,6 +11,29 @@ import { DetailedCountryFlows } from "@/components/charts/DetailedCountryFlows";
 import { EvidenceBasedConstraints } from "@/components/constraint-indicators/EvidenceBasedConstraints";
 import { TimeRangeToggle } from "@/components/ui/TimeRangeToggle";
 import { DemandDifferenceChart } from "@/components/charts/DemandDifferenceChart";
+
+interface NesoRecord {
+  SETTLEMENT_DATE: string;
+  SETTLEMENT_PERIOD: number;
+  ND: number;
+  TSD: number;
+  IFA_FLOW: number;
+  IFA2_FLOW: number;
+  BRITNED_FLOW: number;
+  NEMO_FLOW: number;
+  NSL_FLOW: number;
+  ELECLINK_FLOW: number;
+  VIKING_FLOW: number;
+  GREENLINK_FLOW: number;
+  EMBEDDED_WIND_GENERATION: number;
+  EMBEDDED_SOLAR_GENERATION: number;
+  SCOTTISH_TRANSFER: number;
+  [key: string]: any; // For any other properties we might have missed
+}
+
+interface NesoApiResponse {
+  records: NesoRecord[];
+}
 
 async function fetchNeso(limit: number = 96) {
   try {
@@ -28,21 +50,21 @@ async function fetchNeso(limit: number = 96) {
     
     if (!res.ok) {
       console.error('NESO API error:', res.status, res.statusText);
-      return { records: [] } as any;
+      return { records: [] };
     }
     
     const json = await res.json();
     console.log('NESO data received, records count:', json.result?.records?.length || 0);
-    return json.result as { records: any[] };
+    return json.result as NesoApiResponse;
   } catch (error) {
     console.error('Error fetching NESO data:', error);
-    return { records: [] } as any;
+    return { records: [] };
   }
 }
 
 export default function ChartsPage() {
   const [timeRange, setTimeRange] = useState<"day" | "week">("day");
-  const [records, setRecords] = useState<any[]>([]);
+  const [records, setRecords] = useState<NesoRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -62,7 +84,7 @@ export default function ChartsPage() {
         const { records: data } = await Promise.race([
           fetchNeso(limit),
           timeoutPromise
-        ]) as { records: any[] };
+        ]) as NesoApiResponse;
         
         setRecords(data || []);
         
@@ -103,13 +125,6 @@ export default function ChartsPage() {
   }
 
   // Calculate key metrics from the data
-  const latest = records[0] || {};
-  const currentDemand = latest.ND || 0;
-  const totalInterconnectorFlow = (latest.IFA_FLOW || 0) + (latest.IFA2_FLOW || 0) + 
-    (latest.BRITNED_FLOW || 0) + (latest.NEMO_FLOW || 0) + (latest.NSL_FLOW || 0) + 
-    (latest.ELECLINK_FLOW || 0) + (latest.VIKING_FLOW || 0) + (latest.GREENLINK_FLOW || 0);
-  const embeddedGeneration = (latest.EMBEDDED_WIND_GENERATION || 0) + (latest.EMBEDDED_SOLAR_GENERATION || 0);
-  const gridUtilization = Math.round((currentDemand / 45000) * 100); // Assuming 45GW peak capacity
 
   return (
     <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
@@ -145,7 +160,7 @@ export default function ChartsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <DemandChart data={records as any} />
+            <DemandChart data={records} />
           </CardContent>
         </Card>
 
@@ -161,7 +176,7 @@ export default function ChartsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <EmbeddedGenChart data={records as any} />
+            <EmbeddedGenChart data={records} />
           </CardContent>
         </Card>
       </div>
@@ -179,7 +194,7 @@ export default function ChartsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <DemandDifferenceChart data={records as any} />
+            <DemandDifferenceChart data={records} />
           </CardContent>
         </Card>
       </div>
@@ -197,7 +212,7 @@ export default function ChartsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <InterconnectorTimelineChart data={records as any} />
+            <InterconnectorTimelineChart data={records} />
           </CardContent>
         </Card>
 
@@ -212,7 +227,7 @@ export default function ChartsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <MajorCablesTimelineChart data={records as any} />
+            <MajorCablesTimelineChart data={records} />
           </CardContent>
         </Card>
       </div>
@@ -228,7 +243,7 @@ export default function ChartsPage() {
             <CardDescription>Right now - detailed breakdown by country and cable</CardDescription>
           </CardHeader>
           <CardContent>
-            <DetailedCountryFlows data={records as any} />
+            <DetailedCountryFlows data={records} />
           </CardContent>
         </Card>
       </div>
@@ -247,7 +262,7 @@ export default function ChartsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <EvidenceBasedConstraints data={records as any} />
+              <EvidenceBasedConstraints data={records} />
             </CardContent>
           </Card>
         </div>

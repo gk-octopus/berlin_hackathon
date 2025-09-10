@@ -11,6 +11,20 @@ import {
   Legend,
 } from "recharts";
 
+interface TooltipProps {
+  active?: boolean;
+  payload?: Array<{
+    payload: {
+      label: string;
+      difference: number;
+      percentage: number;
+      ND: number;
+      TSD: number;
+    };
+  }>;
+  label?: string;
+}
+
 type DemandRecord = {
   SETTLEMENT_DATE: string;
   SETTLEMENT_PERIOD: number;
@@ -19,7 +33,7 @@ type DemandRecord = {
 };
 
 export function DemandDifferenceChart({ data }: { data: DemandRecord[] }) {
-  const formatted = data.map((d, index) => {
+  const formatted = data.map((d) => {
     // Create proper date-time from settlement data
     const date = new Date(d.SETTLEMENT_DATE);
     const hours = Math.floor((d.SETTLEMENT_PERIOD - 1) / 2);
@@ -39,7 +53,7 @@ export function DemandDifferenceChart({ data }: { data: DemandRecord[] }) {
     };
   });
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (

@@ -2,6 +2,18 @@
 
 This project was built during a hackathon, so there may be a few rough edges. If you have questions or run into any issues, please reach out :)
 
+## Disclaimer
+
+This demo was created during a ~30-hour hackathon for illustrative and entertainment purposes. Octopus Energy and contributors accept no liability for any use of, or reliance on, this demo.
+
+Data visualisations may be incomplete, inaccurate, or outdated. While some inputs are sourced from official or public datasets (e.g. NESO), they may be transformed, simplified, or interpreted and therefore may contain errors.
+
+No warranty (express or implied) is given as to fitness for any purpose. Nothing herein constitutes advice. Use at your own risk.
+
+To the maximum extent permitted by applicable law, this demo is provided "as is" and "as available" without warranties of any kind. No party involved in its creation, publication or delivery (including Octopus Energy and contributors) accepts any responsibility or liability for any use of, or reliance on, it, or for any loss or damage of any kind arising therefrom.
+
+This codebase was produced rapidly to publish a clickable demo within hackathon time constraints. It may contain errors, shortcuts, and ESLint bypasses and is not production-ready.
+
 ## Project Overview
 
 An interactive energy story map built with Next.js, Mapbox GL JS, and Recharts. It narrates GB’s grid challenges (wind in the north, demand in the south, B6 bottleneck) and proposed solutions with live-ish visuals.
